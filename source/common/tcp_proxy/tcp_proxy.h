@@ -20,6 +20,7 @@
 #include "envoy/upstream/cluster_manager.h"
 #include "envoy/upstream/upstream.h"
 
+#include "source/common/buffer/buffer_impl.h"
 #include "source/common/common/logger.h"
 #include "source/common/network/cidr_range.h"
 #include "source/common/network/filter_impl.h"
@@ -111,6 +112,7 @@ public:
     const absl::optional<std::chrono::milliseconds>& maxDownstreamConnectinDuration() const {
       return max_downstream_connection_duration_;
     }
+    bool receiveBeforeConnect() { return receive_before_connect_; }
 
   private:
     static TcpProxyStats generateStats(Stats::Scope& scope);
@@ -123,6 +125,7 @@ public:
     absl::optional<std::chrono::milliseconds> idle_timeout_;
     absl::optional<TunnelingConfig> tunneling_config_;
     absl::optional<std::chrono::milliseconds> max_downstream_connection_duration_;
+    bool receive_before_connect_;
   };
 
   using SharedConfigSharedPtr = std::shared_ptr<SharedConfig>;
@@ -159,6 +162,7 @@ public:
     return cluster_metadata_match_criteria_.get();
   }
   const Network::HashPolicy* hashPolicy() { return hash_policy_.get(); }
+  bool receiveBeforeConnect() { return shared_config_->receiveBeforeConnect(); }
 
 private:
   struct SimpleRouteImpl : public Route {
@@ -377,6 +381,8 @@ protected:
   uint32_t connect_attempts_{};
   bool connecting_{};
   bool downstream_closed_{};
+  Buffer::OwnedImpl early_data_buffer_{};
+  bool early_data_end_stream_{false};
 };
 
 // This class deals with an upstream connection that needs to finish flushing, when the downstream

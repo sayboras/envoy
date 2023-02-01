@@ -80,6 +80,7 @@ Config::SharedConfig::SharedConfig(
         DurationUtil::durationToMilliseconds(config.max_downstream_connection_duration());
     max_downstream_connection_duration_ = std::chrono::milliseconds(connection_duration);
   }
+  receive_before_connect_ = config.receive_before_connect();
 }
 
 Config::Config(const envoy::extensions::filters::network::tcp_proxy::v3::TcpProxy& config,
@@ -194,7 +195,9 @@ void Filter::initialize(Network::ReadFilterCallbacks& callbacks, bool set_connec
   // Need to disable reads so that we don't write to an upstream that might fail
   // in onData(). This will get re-enabled when the upstream connection is
   // established.
-  read_callbacks_->connection().readDisable(true);
+  if (!config_->receiveBeforeConnect()) {
+    read_callbacks_->connection().readDisable(true);
+  }
   getStreamInfo().setUpstreamInfo(std::make_shared<StreamInfo::UpstreamInfoImpl>());
   config_->stats().downstream_cx_total_.inc();
   if (set_connection_stats) {
@@ -403,8 +406,11 @@ Network::FilterStatus Filter::initializeUpstreamConnection() {
     // cluster->stats().upstream_cx_none_healthy in the latter case.
     getStreamInfo().setResponseFlag(StreamInfo::ResponseFlag::NoHealthyUpstream);
     onInitFailure(UpstreamFailureReason::NoHealthyUpstream);
+    return Network::FilterStatus::StopIteration;
   }
-  return Network::FilterStatus::StopIteration;
+  // Allow OnData() to receive data before connect if so configured
+  return config_->receiveBeforeConnect()
+       ? Network::FilterStatus::Continue : Network::FilterStatus::StopIteration;
 }
 
 bool Filter::maybeTunnel(Upstream::ThreadLocalCluster& cluster) {
@@ -514,6 +520,12 @@ Network::FilterStatus Filter::onData(Buffer::Instance& data, bool end_stream) {
                  read_callbacks_->connection(), data.length(), end_stream);
   if (upstream_) {
     upstream_->encodeData(data, end_stream);
+  } else if (config_->receiveBeforeConnect()) {
+    // Buffer data received before upstream connection exists
+    early_data_buffer_.move(data);
+    if (!early_data_end_stream_) {
+      early_data_end_stream_ = end_stream;
+    }
   }
   // The upstream should consume all of the data.
   // Before there is an upstream the connection should be readDisabled. If the upstream is
@@ -604,7 +616,12 @@ void Filter::onUpstreamConnection() {
   connecting_ = false;
   // Re-enable downstream reads now that the upstream connection is established
   // so we have a place to send downstream data to.
-  read_callbacks_->connection().readDisable(false);
+  if (!config_->receiveBeforeConnect()) {
+    read_callbacks_->connection().readDisable(false);
+  } else if (early_data_buffer_.length() > 0) {
+    upstream_->encodeData(early_data_buffer_, early_data_end_stream_);
+    ASSERT(0 == early_data_buffer_.length());
+  }
 
   read_callbacks_->upstreamHost()->outlierDetector().putResult(
       Upstream::Outlier::Result::LocalOriginConnectSuccessFinal);
