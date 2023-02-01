@@ -302,6 +302,9 @@ struct ActiveStreamDecoderFilter : public ActiveStreamFilterBase,
 
   bool iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr host,
                                 StreamInfo::StreamInfo& stream_info) override;
+  void addUpstreamCallback(const UpstreamCallback& cb) override;
+  bool iterateUpstreamCallbacks(Http::RequestHeaderMap& headers,
+                                StreamInfo::StreamInfo& stream_info) override;
 
   StreamDecoderFilterSharedPtr handle_;
   bool is_grpc_request_{};
@@ -1021,12 +1024,17 @@ private:
     return request_metadata_map_vector_.get();
   }
 
+  void addUpstreamCallback(const UpstreamCallback&);
+  bool iterateUpstreamCallbacks(Http::RequestHeaderMap&, StreamInfo::StreamInfo&);
+
   FilterManagerCallbacks& filter_manager_callbacks_;
   Event::Dispatcher& dispatcher_;
   const Network::Connection& connection_;
   const uint64_t stream_id_;
   Buffer::BufferMemoryAccountSharedPtr account_;
   const bool proxy_100_continue_;
+
+  std::vector<UpstreamCallback> decoder_filter_upstream_cbs_{};
 
   std::list<ActiveStreamDecoderFilterPtr> decoder_filters_;
   std::list<ActiveStreamEncoderFilterPtr> encoder_filters_;

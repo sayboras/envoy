@@ -330,6 +330,11 @@ private:
                                 StreamInfo::StreamInfo&) override {
     return true;
   }
+  void addUpstreamCallback(const UpstreamCallback&) override {}
+  bool iterateUpstreamCallbacks(Http::RequestHeaderMap&,
+                                StreamInfo::StreamInfo&) override {
+    return true;
+  }
   Router::RouteConstSharedPtr route() override { return route_; }
   Router::RouteConstSharedPtr route(const Router::RouteCallback&) override { return nullptr; }
   void setRoute(Router::RouteConstSharedPtr) override {}
