@@ -43,6 +43,7 @@ ActiveTcpListener::~ActiveTcpListener() {
   }
 
   for (auto& [chain, active_connections] : connections_by_context_) {
+    UNREFERENCED_PARAMETER(chain);
     ASSERT(active_connections != nullptr);
     auto& connections = active_connections->connections_;
     while (!connections.empty()) {
