@@ -556,18 +556,26 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::RequestHeaderMap& headers,
     absl::string_view sni_value = parsed_authority.host_;
 
     if (should_set_sni && upstream_http_protocol_options.value().auto_sni()) {
-      callbacks_->streamInfo().filterState()->setData(
-          Network::UpstreamServerName::key(),
-          std::make_unique<Network::UpstreamServerName>(sni_value),
-          StreamInfo::FilterState::StateType::Mutable);
+      try {
+        callbacks_->streamInfo().filterState()->setData(
+            Network::UpstreamServerName::key(),
+            std::make_unique<Network::UpstreamServerName>(sni_value),
+            StreamInfo::FilterState::StateType::Mutable);
+      } catch (const EnvoyException& e) {
+        ENVOY_STREAM_LOG(debug, "could not set sni: {}", *callbacks_, e.what());
+      }
     }
 
     if (upstream_http_protocol_options.value().auto_san_validation()) {
-      callbacks_->streamInfo().filterState()->setData(
-          Network::UpstreamSubjectAltNames::key(),
-          std::make_unique<Network::UpstreamSubjectAltNames>(
-              std::vector<std::string>{std::string(sni_value)}),
-          StreamInfo::FilterState::StateType::Mutable);
+      try {
+        callbacks_->streamInfo().filterState()->setData(
+            Network::UpstreamSubjectAltNames::key(),
+            std::make_unique<Network::UpstreamSubjectAltNames>(
+                std::vector<std::string>{std::string(sni_value)}),
+            StreamInfo::FilterState::StateType::Mutable);
+      } catch (const EnvoyException& e) {
+        ENVOY_STREAM_LOG(debug, "could not set subject alt name: {}", *callbacks_, e.what());
+      }
     }
   }
 
