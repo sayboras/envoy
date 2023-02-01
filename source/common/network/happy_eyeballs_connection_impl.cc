@@ -106,7 +106,7 @@ void HappyEyeballsConnectionImpl::enableHalfClose(bool enabled) {
   }
 }
 
-bool HappyEyeballsConnectionImpl::isHalfCloseEnabled() {
+bool HappyEyeballsConnectionImpl::isHalfCloseEnabled() const {
   return connections_[0]->isHalfCloseEnabled();
 }
 

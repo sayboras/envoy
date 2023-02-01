@@ -116,7 +116,7 @@ protected:
         IS_ENVOY_BUG("Unexpected function call");
       }
       void enableHalfClose(bool) override { IS_ENVOY_BUG("Unexpected function call"); }
-      bool isHalfCloseEnabled() override {
+      bool isHalfCloseEnabled() const override {
         IS_ENVOY_BUG("Unexpected function call");
         return false;
       }

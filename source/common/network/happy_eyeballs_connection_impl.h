@@ -70,7 +70,7 @@ public:
   absl::optional<std::chrono::milliseconds> lastRoundTripTime() const override;
 
   // Simple getters which always delegate to the first connection in connections_.
-  bool isHalfCloseEnabled() override;
+  bool isHalfCloseEnabled() const override;
   std::string nextProtocol() const override;
   // Note, this might change before connect finishes.
   ConnectionInfoSetter& connectionInfoSetter() override;
