@@ -417,6 +417,23 @@ public:
 };
 
 /**
+ * UpstreamCallback can be used to reject upstream host selection made by the router.
+ * This callback is passed the StreamInfo, and the final headers that can be used by
+ * the callback to inform its decision.
+ *
+ * The callback is called right befere the request is encoded on the already connected
+ * upstream connection. At this stage all header manipulations in the Envoy configuration
+ * have been performed so that the callback may inspect the final headers.
+ * 
+ * UpstreamCallback may not be called if a local reply is issued instead or forwarding
+ * the request.
+ *
+ * Returning 'true' allows the request to be forwarded. Returning 'false' prevents the
+ * request from being forwarded, and a 403 local response is issued instead.
+ */
+using UpstreamCallback = std::function<bool(Http::RequestHeaderMap&, StreamInfo::StreamInfo&)>;
+
+/**
  * Stream decoder filter callbacks add additional callbacks that allow a decoding filter to restart
  * decoding if they decide to hold data (e.g. for buffering or rate limiting).
  */
@@ -719,6 +736,18 @@ public:
    * Returns 'false' if any of the callbacks rejects the connection, 'true' otherwise.
    */
   virtual bool iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr,
+                                        StreamInfo::StreamInfo&) PURE;
+
+  /*
+   * Adds the given callback to be executed later via 
+   */
+  virtual void addUpstreamCallback(const UpstreamCallback& cb) PURE;
+
+  /**
+   * Invokes all the added callbacks before forwarding requests from this stream upstream.
+   * Returns 'false' if any of the callbacks rejects the request, 'true' otherwise.
+   */
+  virtual bool iterateUpstreamCallbacks(Http::RequestHeaderMap&,
                                         StreamInfo::StreamInfo&) PURE;
 };
 

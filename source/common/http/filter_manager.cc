@@ -1381,10 +1381,31 @@ bool FilterManager::createFilterChain() {
   return !upgrade_rejected;
 }
 
+void FilterManager::addUpstreamCallback(const UpstreamCallback& cb) {
+  decoder_filter_upstream_cbs_.emplace_back(cb);
+}
+  
+bool FilterManager::iterateUpstreamCallbacks(Http::RequestHeaderMap& headers,
+                                             StreamInfo::StreamInfo& upstream_info) {
+  bool accept = true;
+  for (const auto& cb : decoder_filter_upstream_cbs_) {
+    accept = accept && cb(headers, upstream_info);
+  }
+  return accept;
+}
+
 bool ActiveStreamDecoderFilter::iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr host,
                                                          StreamInfo::StreamInfo& stream_info) {
   return parent_.filter_manager_callbacks_.iterateUpstreamCallbacks(host, stream_info);
+}
 
+void ActiveStreamDecoderFilter::addUpstreamCallback(const UpstreamCallback& cb) {
+  parent_.addUpstreamCallback(cb);
+}
+
+bool ActiveStreamDecoderFilter::iterateUpstreamCallbacks(Http::RequestHeaderMap& headers,
+                                                         StreamInfo::StreamInfo& stream_info) {
+  return parent_.iterateUpstreamCallbacks(headers, stream_info);
 }
 
 void ActiveStreamDecoderFilter::requestDataDrained() {

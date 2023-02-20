@@ -362,6 +362,11 @@ private:
                                 StreamInfo::StreamInfo&) override {
     return true;
   }
+  void addUpstreamCallback(const UpstreamCallback&) override {}
+  bool iterateUpstreamCallbacks(Http::RequestHeaderMap&,
+                                StreamInfo::StreamInfo&) override {
+    return true;
+  }
   Upstream::ClusterInfoConstSharedPtr clusterInfo() override { return parent_.cluster_; }
   uint64_t streamId() const override { return stream_id_; }
   // TODO(kbaichoo): Plumb account from owning request filter.
