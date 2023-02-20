@@ -179,6 +179,10 @@ void TcpConnPool::newStream(GenericConnectionPoolCallbacks& callbacks) {
   }
 }
 
+Upstream::HostDescriptionConstSharedPtr TcpConnPool::host() const {
+  return conn_pool_data_.value().host();
+}
+
 void TcpConnPool::onPoolFailure(ConnectionPool::PoolFailureReason reason,
                                 absl::string_view failure_reason,
                                 Upstream::HostDescriptionConstSharedPtr host) {
@@ -238,6 +242,10 @@ void HttpConnPool::newStream(GenericConnectionPoolCallbacks& callbacks) {
   if (handle != nullptr) {
     upstream_handle_ = handle;
   }
+}
+
+Upstream::HostDescriptionConstSharedPtr HttpConnPool::host() const {
+  return conn_pool_data_.value().host();
 }
 
 void HttpConnPool::onPoolFailure(ConnectionPool::PoolFailureReason reason,

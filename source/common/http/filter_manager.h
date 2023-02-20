@@ -250,6 +250,9 @@ struct ActiveStreamDecoderFilter : public ActiveStreamFilterBase,
   void requestDataTooLarge();
   void requestDataDrained();
 
+  bool iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr host,
+                                StreamInfo::StreamInfo& stream_info) override;
+
   StreamDecoderFilterSharedPtr handle_;
   bool is_grpc_request_{};
 };
@@ -510,6 +513,12 @@ public:
    * Returns the tracked scope to use for this stream.
    */
   virtual const ScopeTrackedObject& scope() PURE;
+
+  /**
+   * Returns whether connection to the selected upstream host is allowed.
+   */
+  virtual bool iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr,
+                                        StreamInfo::StreamInfo&) const PURE;
 
   /**
    * Returns a handle to the downstream callbacks, if available.

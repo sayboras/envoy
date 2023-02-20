@@ -358,6 +358,10 @@ private:
   void resetStream(Http::StreamResetReason reset_reason = Http::StreamResetReason::LocalReset,
                    absl::string_view transport_failure_reason = "") override;
   Router::RouteConstSharedPtr route() override { return route_; }
+  bool iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr,
+                                StreamInfo::StreamInfo&) override {
+    return true;
+  }
   Upstream::ClusterInfoConstSharedPtr clusterInfo() override { return parent_.cluster_; }
   uint64_t streamId() const override { return stream_id_; }
   // TODO(kbaichoo): Plumb account from owning request filter.

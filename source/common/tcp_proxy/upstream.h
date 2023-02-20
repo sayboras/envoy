@@ -26,6 +26,7 @@ public:
 
   // GenericConnPool
   void newStream(GenericConnectionPoolCallbacks& callbacks) override;
+  Upstream::HostDescriptionConstSharedPtr host() const override;
 
   // Tcp::ConnectionPool::Callbacks
   void onPoolFailure(ConnectionPool::PoolFailureReason reason,
@@ -55,6 +56,7 @@ public:
 
   // GenericConnPool
   void newStream(GenericConnectionPoolCallbacks& callbacks) override;
+  Upstream::HostDescriptionConstSharedPtr host() const override;
 
   // Http::ConnectionPool::Callbacks,
   void onPoolFailure(ConnectionPool::PoolFailureReason reason,

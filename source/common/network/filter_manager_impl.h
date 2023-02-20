@@ -150,6 +150,13 @@ private:
       FixedWriteBufferSource buffer_source{data, end_stream};
       parent_.onResumeWriting(this, buffer_source);
     }
+    void addUpstreamCallback(const UpstreamCallback& cb) override {
+      parent_.addUpstreamCallback(cb);
+    }
+    bool iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr host,
+                                  StreamInfo::StreamInfo& stream_info) override {
+      return parent_.iterateUpstreamCallbacks(host, stream_info);
+    }
 
     FilterManagerImpl& parent_;
     WriteFilterSharedPtr filter_;
@@ -162,6 +169,20 @@ private:
   FilterStatus onWrite(ActiveWriteFilter* filter, WriteBufferSource& buffer_source);
   void onResumeWriting(ActiveWriteFilter* filter, WriteBufferSource& buffer_source);
 
+  void addUpstreamCallback(const UpstreamCallback& cb) {
+    decoder_filter_upstream_cbs_.emplace_back(cb);
+  }
+    
+  bool iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr host,
+				StreamInfo::StreamInfo& stream_info) {
+    bool accept = true;
+    for (const auto& cb : decoder_filter_upstream_cbs_) {
+      accept = accept && cb(host, stream_info);
+    }
+    return accept;
+  }
+
+  std::vector<UpstreamCallback> decoder_filter_upstream_cbs_{};
   FilterManagerConnection& connection_;
   const Socket& socket_;
   Upstream::HostDescriptionConstSharedPtr host_description_;

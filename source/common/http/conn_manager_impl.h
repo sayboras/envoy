@@ -286,6 +286,10 @@ private:
     // TODO(alyssawilk) this should be an optional reference.
     Tracing::Config& tracingConfig() override;
     const ScopeTrackedObject& scope() override;
+    bool iterateUpstreamCallbacks(Upstream::HostDescriptionConstSharedPtr host,
+				  StreamInfo::StreamInfo& stream_info) const override {
+      return connection_manager_.read_callbacks_->iterateUpstreamCallbacks(host, stream_info);
+    }
     OptRef<DownstreamStreamFilterCallbacks> downstreamCallbacks() override { return *this; }
 
     // DownstreamStreamFilterCallbacks
