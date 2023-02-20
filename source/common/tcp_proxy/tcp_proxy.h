@@ -21,6 +21,7 @@
 #include "envoy/upstream/cluster_manager.h"
 #include "envoy/upstream/upstream.h"
 
+#include "source/common/buffer/buffer_impl.h"
 #include "source/common/common/logger.h"
 #include "source/common/formatter/substitution_format_string.h"
 #include "source/common/http/header_map_impl.h"
@@ -210,6 +211,7 @@ public:
         return OnDemandConfigOptConstRef();
       }
     }
+    bool receiveBeforeConnect() { return receive_before_connect_; }
 
   private:
     static TcpProxyStats generateStats(Stats::Scope& scope);
@@ -223,6 +225,7 @@ public:
     absl::optional<std::chrono::milliseconds> max_downstream_connection_duration_;
     std::unique_ptr<TunnelingConfigHelper> tunneling_config_helper_;
     std::unique_ptr<OnDemandConfig> on_demand_config_;
+    bool receive_before_connect_;
   };
 
   using SharedConfigSharedPtr = std::shared_ptr<SharedConfig>;
@@ -271,6 +274,7 @@ public:
   }
   // This function must not be called if on demand is disabled.
   const OnDemandStats& onDemandStats() const { return shared_config_->onDemandConfig()->stats(); }
+  bool receiveBeforeConnect() { return shared_config_->receiveBeforeConnect(); }
 
 private:
   struct SimpleRouteImpl : public Route {
@@ -500,6 +504,8 @@ protected:
   uint32_t connect_attempts_{};
   bool connecting_{};
   bool downstream_closed_{};
+  Buffer::OwnedImpl early_data_buffer_{};
+  bool early_data_end_stream_{false};
 };
 
 // This class deals with an upstream connection that needs to finish flushing, when the downstream
