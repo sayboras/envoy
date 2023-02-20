@@ -49,7 +49,7 @@ public:
     IS_ENVOY_BUG("unexpected call to addBytesSentCallback");
   }
   void enableHalfClose(bool enabled) override;
-  bool isHalfCloseEnabled() override;
+  bool isHalfCloseEnabled() const override;
   void close(Network::ConnectionCloseType type) override;
   Event::Dispatcher& dispatcher() override { return dispatcher_; }
   std::string nextProtocol() const override { return EMPTY_STRING; }
